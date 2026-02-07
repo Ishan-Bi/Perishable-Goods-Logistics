@@ -1,15 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food & Medicine Rescue - Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Dashboard UI for Logistics</title>
-    </head>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            overflow: hidden;
+        }
 
-    <body>
-      <div id="root"></div>
-      <script type="module" src="/src/main.tsx"></script>
-    </body>
-  </html>
-  
+        .main-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .nav-sidebar {
+            width: 250px;
+            background: #1a202c;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            padding: 24px 20px;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .brand h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .brand p {
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 14px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #cbd5e0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: #2d3748;
+            color: white;
+        }
+
+        .nav-item.active {
+            background: #3182ce;
+            color: white;
+            border-left: 4px solid #63b3ed;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .topbar {
+            background: white;
+            padding: 16px 32px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3182ce;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .page-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h4 {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .change {
+            font-size: 13px;
+            color: #48bb78;
+            font-weight: 600;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 13px;
+            color: #718096;
+            font-weight: 600;
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #2d3748;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .badge.warning {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+
+        .badge.info {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3182ce;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2c5282;
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .map-container {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+
+        .map-sidebar {
+            width: 350px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        #map {
+            flex: 1;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        .info-label {
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border-left: 4px solid #3182ce;
+        }
+
+        .pickup-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .pickup-item {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+
+        .legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .legend-marker {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .marker-user {
+            background: #3182ce;
+        }
+
+        .marker-ngo {
+            background: #48bb78;
+        }
+
+        .marker-pickup {
+            background: #e53e3e;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="nav-sidebar">
+            <div class="brand">
+                <h2>🚑 Food Rescue</h2>
+                <p>Logistics Optimizer</p>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" data-page="map">
+                    <span class="nav-icon">🗺️</span>
+                    <span>Route Optimizer</span>
+                </div>
+                <div class="nav-item" data-page="pickups">
+                    <span class="nav-icon">📦</span>
+                    <span>Pickup Requests</span>
+                </div>
+                <div class="nav-item" data-page="ngos">
+                    <span class="nav-icon">🏢</span>
+                    <span>NGO Centers</span>
+                </div>
+                <div class="nav-item" data-page="analytics">
+                    <span class="nav-icon">📈</span>
+                    <span>Analytics</span>
+                </div>
+                <div class="nav-item" data-page="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="topbar">
+                <h1 id="pageTitle">Dashboard Overview</h1>
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <span style="font-weight: 600; font-size: 14px;">Admin User</span>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <div class="page active" id="dashboard">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>Active Pickups</h4>
+                            <div class="value">24</div>
+                            <div class="change">↑ 12% from last week</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>NGO Partners</h4>
+                            <div class="value">15</div>
+                            <div class="change">↑ 3 new this month</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Food Rescued (kg)</h4>
+                            <div class="value">1,247</div>
+                            <div class="change">↑ 23% from last week</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>CO2 Saved (kg)</h4>
+                            <div class="value">843</div>
+                            <div class="change">↑ 18% from last week</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <h3>Recent Pickup Requests</h3>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Location</th>
+                                        <th>Items</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>#1247</td>
+                                        <td>Connaught Place</td>
+                                        <td>50 kg food</td>
+                                        <td><span class="badge success">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>#1248</td>
+                                        <td>Karol Bagh</td>
+                                        <td>30 kg medicines</td>
+                                        <td><span class="badge info">In Transit</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>#1249</td>
+                                        <td>Saket</td>
+                                        <td>75 kg food</td>
+                                        <td><span class="badge warning">Pending</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="card">
+                            <h3>NGO Performance</h3>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>NGO Name</th>
+                                        <th>Pickups</th>
+                                        <th>Rating</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>City Food Bank</td>
+                                        <td>127</td>
+                                        <td>⭐ 4.8</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Hope Foundation</td>
+                                        <td>95</td>
+                                        <td>⭐ 4.6</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Care & Share</td>
+                                        <td>83</td>
+                                        <td>⭐ 4.7</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page" id="map">
+                    <div class="map-container">
+                        <div class="map-sidebar">
+                            <h3 style="margin-bottom: 16px;">Route Controls</h3>
+                            
+                            <div class="alert alert-info" id="pickupAlert">
+                                Click "Add Pickup Location" then click on the map to place a pickup point.
+                            </div>
+
+                            <button class="btn btn-primary" id="addPickupBtn" style="width: 100%; margin-bottom: 12px;">📍 Add Pickup Location</button>
+                            
+                            <div style="margin: 20px 0;">
+                                <div class="info-row">
+                                    <span class="info-label">Your Location</span>
+                                    <span class="info-value" id="userLocation">Detecting...</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Active NGOs</span>
+                                    <span class="info-value" id="ngoCount">0</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Pickup Points</span>
+                                    <span class="info-value" id="pickupCount">0</span>
+                                </div>
+                            </div>
+
+                            <h4 style="margin: 16px 0 12px 0; font-size: 14px;">Pickup Points</h4>
+                            <div class="pickup-list" id="pickupList"></div>
+
+                            <button class="btn btn-secondary" id="optimizeBtn" disabled style="width: 100%; margin-top: 16px;">🚀 Optimize Route</button>
+
+                            <div class="legend">
+                                <h4 style="margin-bottom: 8px; font-size: 14px;">Map Legend</h4>
+                                <div class="legend-item">
+                                    <div class="legend-marker marker-user"></div>
+                                    <span>Your Location</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-marker marker-ngo"></div>
+                                    <span>NGO Centers</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-marker marker-pickup"></div>
+                                    <span>Pickup Points</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="map"></div>
+                    </div>
+                </div>
+
+                <div class="page" id="pickups">
+                    <div class="card">
+                        <h3>All Pickup Requests</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Date</th>
+                                    <th>Location</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Assigned NGO</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#1247</td>
+                                    <td>Feb 7, 2026</td>
+                                    <td>Connaught Place</td>
+                                    <td>Food</td>
+                                    <td>50 kg</td>
+                                    <td>City Food Bank</td>
+                                    <td><span class="badge success">Completed</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#1248</td>
+                                    <td>Feb 7, 2026</td>
+                                    <td>Karol Bagh</td>
+                                    <td>Medicine</td>
+                                    <td>30 kg</td>
+                                    <td>Hope Foundation</td>
+                                    <td><span class="badge info">In Transit</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#1249</td>
+                                    <td>Feb 8, 2026</td>
+                                    <td>Saket</td>
+                                    <td>Food</td>
+                                    <td>75 kg</td>
+                                    <td>Care & Share</td>
+                                    <td><span class="badge warning">Pending</span></td>
+                                </tr>
+                                <tr>
+                                    <td>#1250</td>
+                                    <td>Feb 8, 2026</td>
+                                    <td>Dwarka</td>
+                                    <td>Food</td>
+                                    <td>40 kg</td>
+                                    <td>Helping Hands</td>
+                                    <td><span class="badge warning">Pending</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="page" id="ngos">
+                    <div class="card">
+                        <h3>Registered NGO Partners</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>NGO Name</th>
+                                    <th>Location</th>
+                                    <th>Contact</th>
+                                    <th>Total Pickups</th>
+                                    <th>Rating</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>City Food Bank NGO</td>
+                                    <td>Central Delhi</td>
+                                    <td>+91-98765-43210</td>
+                                    <td>127</td>
+                                    <td>⭐ 4.8</td>
+                                    <td><span class="badge success">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Hope Foundation</td>
+                                    <td>South Delhi</td>
+                                    <td>+91-98765-43211</td>
+                                    <td>95</td>
+                                    <td>⭐ 4.6</td>
+                                    <td><span class="badge success">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Care & Share NGO</td>
+                                    <td>West Delhi</td>
+                                    <td>+91-98765-43212</td>
+                                    <td>83</td>
+                                    <td>⭐ 4.7</td>
+                                    <td><span class="badge success">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Helping Hands</td>
+                                    <td>East Delhi</td>
+                                    <td>+91-98765-43213</td>
+                                    <td>72</td>
+                                    <td>⭐ 4.5</td>
+                                    <td><span class="badge success">Active</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Community Kitchen</td>
+                                    <td>North Delhi</td>
+                                    <td>+91-98765-43214</td>
+                                    <td>64</td>
+                                    <td>⭐ 4.4</td>
+                                    <td><span class="badge success">Active</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="page" id="analytics">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>Total Food Rescued</h4>
+                            <div class="value">12.4 T</div>
+                            <div class="change">This year</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Meals Provided</h4>
+                            <div class="value">24,800</div>
+                            <div class="change">Approx. meals</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Total Routes</h4>
+                            <div class="value">342</div>
+                            <div class="change">Optimized routes</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Avg. Response Time</h4>
+                            <div class="value">28 min</div>
+                            <div class="change">↓ 15% improvement</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Monthly Performance Trends</h3>
+                        <div style="padding: 40px; text-align: center; color: #718096;">
+                            <p>📊 Chart visualization would be integrated here</p>
+                            <p style="margin-top: 8px; font-size: 13px;">Food rescued vs. CO2 saved over time</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page" id="settings">
+                    <div class="card">
+                        <h3>Application Settings</h3>
+                        
+                        <div class="form-group">
+                            <label>Organization Name</label>
+                            <input type="text" value="Food & Medicine Rescue Delhi" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Default Location</label>
+                            <select>
+                                <option>Delhi NCR</option>
+                                <option>Mumbai</option>
+                                <option>Bangalore</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Notification Preferences</label>
+                            <select>
+                                <option>All notifications</option>
+                                <option>Critical only</option>
+                                <option>Disabled</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Route Optimization Algorithm</label>
+                            <select>
+                                <option>Shortest Distance</option>
+                                <option>Fastest Time</option>
+                                <option>Balanced</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let userMarker;
+        let pickupMarkers = [];
+        let ngoMarkers = [];
+        let isAddingPickup = false;
+        let mapInitialized = false;
+
+        const ngoLocations = [
+            { name: 'City Food Bank NGO', lat: 28.6139, lng: 77.2090 },
+            { name: 'Hope Foundation', lat: 28.6280, lng: 77.2200 },
+            { name: 'Care & Share NGO', lat: 28.5950, lng: 77.2300 },
+            { name: 'Helping Hands', lat: 28.6400, lng: 77.1950 },
+            { name: 'Community Kitchen', lat: 28.6050, lng: 77.1850 }
+        ];
+
+        const userIcon = L.icon({
+            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIHZpZXdCb3g9IjAgMCAzMCAzMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxNSIgY3k9IjE1IiByPSIxMiIgZmlsbD0iIzMxODJjZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIzIi8+PC9zdmc+',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+
+        const ngoIcon = L.icon({
+            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCAzMCA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTUgMEMxMC44NSAwIDcuMDY1IDIuMDcgNC41IDUuMjVDMS45MzUgOC40MyAwIDEyLjYgMCAxN0MwIDI2LjI1IDE1IDQyIDE1IDQyQzE1IDQyIDMwIDI2LjI1IDMwIDE3QzMwIDEyLjYgMjguMDY1IDguNDMgMjUuNSA1LjI1QzIyLjkzNSAyLjA3IDE5LjE1IDAgMTUgMFpNMTUgMjNDMTEuNyAyMyA5IDIwLjMgOSAxN0M5IDEzLjcgMTEuNyAxMSAxNSAxMUMxOC4zIDExIDIxIDEzLjcgMjEgMTdDMjEgMjAuMyAxOC4zIDIzIDE1IDIzWiIgZmlsbD0iIzQ4YmI3OCIvPjwvc3ZnPg==',
+            iconSize: [30, 42],
+            iconAnchor: [15, 42],
+            popupAnchor: [0, -42]
+        });
+
+        const pickupIcon = L.icon({
+            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCAzMCA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTUgMEMxMC44NSAwIDcuMDY1IDIuMDcgNC41IDUuMjVDMS45MzUgOC40MyAwIDEyLjYgMCAxN0MwIDI2LjI1IDE1IDQyIDE1IDQyQzE1IDQyIDMwIDI2LjI1IDMwIDE3QzMwIDEyLjYgMjguMDY1IDguNDMgMjUuNSA1LjI1QzIyLjkzNSAyLjA3IDE5LjE1IDAgMTUgMFpNMTUgMjNDMTEuNyAyMyA5IDIwLjMgOSAxN0M5IDEzLjcgMTEuNyAxMSAxNSAxMUMxOC4zIDExIDIxIDEzLjcgMjEgMTdDMjEgMjAuMyAxOC4zIDIzIDE1IDIzWiIgZmlsbD0iI2U1M2UzZSIvPjwvc3ZnPg==',
+            iconSize: [30, 42],
+            iconAnchor: [15, 42],
+            popupAnchor: [0, -42]
+        });
+
+        function initializeMap() {
+            if (mapInitialized) return;
+            
+            map = L.map('map').setView([28.6139, 77.2090], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            ngoLocations.forEach((ngo, index) => {
+                const marker = L.marker([ngo.lat, ngo.lng], { icon: ngoIcon })
+                    .addTo(map)
+                    .bindPopup(`<b>${ngo.name}</b><br>NGO Distribution Center`);
+                ngoMarkers.push(marker);
+            });
+
+            document.getElementById('ngoCount').textContent = ngoLocations.length;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        userMarker = L.marker([lat, lng], { icon: userIcon })
+                            .addTo(map)
+                            .bindPopup('<b>You are here</b>');
+                        
+                        map.setView([lat, lng], 13);
+                        
+                        document.getElementById('userLocation').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    },
+                    (error) => {
+                        document.getElementById('userLocation').textContent = 'Default view';
+                    }
+                );
+            }
+
+            map.on('click', (e) => {
+                if (isAddingPickup) {
+                    const marker = L.marker([e.latlng.lat, e.latlng.lng], { icon: pickupIcon })
+                        .addTo(map)
+                        .bindPopup(`<b>Pickup Point #${pickupMarkers.length + 1}</b><br>Lat: ${e.latlng.lat.toFixed(4)}, Lng: ${e.latlng.lng.toFixed(4)}`);
+                    
+                    pickupMarkers.push(marker);
+                    
+                    const pickupList = document.getElementById('pickupList');
+                    const pickupItem = document.createElement('div');
+                    pickupItem.className = 'pickup-item';
+                    pickupItem.textContent = `Pickup #${pickupMarkers.length}: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
+                    pickupList.appendChild(pickupItem);
+                    
+                    document.getElementById('pickupCount').textContent = pickupMarkers.length;
+                    
+                    if (pickupMarkers.length > 0) {
+                        document.getElementById('optimizeBtn').disabled = false;
+                    }
+                    
+                    isAddingPickup = false;
+                    document.getElementById('addPickupBtn').textContent = '📍 Add Pickup Location';
+                    document.getElementById('addPickupBtn').style.background = '#3182ce';
+                    document.getElementById('pickupAlert').textContent = 'Click "Add Pickup Location" then click on the map to place a pickup point.';
+                    map.getContainer().style.cursor = '';
+                }
+            });
+
+            mapInitialized = true;
+        }
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const pageName = this.getAttribute('data-page');
+                
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+                
+                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+                document.getElementById(pageName).classList.add('active');
+                
+                const titles = {
+                    'dashboard': 'Dashboard Overview',
+                    'map': 'Route Optimizer',
+                    'pickups': 'Pickup Requests',
+                    'ngos': 'NGO Partners',
+                    'analytics': 'Analytics & Reports',
+                    'settings': 'Settings'
+                };
+                document.getElementById('pageTitle').textContent = titles[pageName];
+
+                if (pageName === 'map' && !mapInitialized) {
+                    setTimeout(() => {
+                        initializeMap();
+                    }, 100);
+                }
+
+                if (pageName === 'map' && mapInitialized) {
+                    setTimeout(() => {
+                        map.invalidateSize();
+                    }, 100);
+                }
+            });
+        });
+
+        document.getElementById('addPickupBtn').addEventListener('click', () => {
+            isAddingPickup = !isAddingPickup;
+            const btn = document.getElementById('addPickupBtn');
+            const alert = document.getElementById('pickupAlert');
+            
+            if (isAddingPickup) {
+                btn.textContent = '❌ Cancel Adding';
+                btn.style.background = '#e53e3e';
+                alert.textContent = 'Click anywhere on the map to add a pickup point!';
+                map.getContainer().style.cursor = 'crosshair';
+            } else {
+                btn.textContent = '📍 Add Pickup Location';
+                btn.style.background = '#3182ce';
+                alert.textContent = 'Click "Add Pickup Location" then click on the map to place a pickup point.';
+                map.getContainer().style.cursor = '';
+            }
+        });
+
+        document.getElementById('optimizeBtn').addEventListener('click', () => {
+            alert('Route optimization would connect to backend API here.\n\nPickup points: ' + pickupMarkers.length + '\nNGO centers: ' + ngoMarkers.length);
+        });
+    </script>
+</body>
+</html>
