@@ -250,6 +250,10 @@
             color: white;
         }
 
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -270,27 +274,56 @@
             border: 1px solid #e2e8f0;
             border-radius: 6px;
             font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .map-page-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 24px;
+        }
+
+        .map-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .map-container {
-            display: flex;
-            gap: 20px;
-            height: calc(100vh - 200px);
-        }
-
-        .map-sidebar {
-            width: 350px;
             background: white;
             border-radius: 12px;
-            padding: 20px;
-            overflow-y: auto;
+            overflow: hidden;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .map-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0;
         }
 
         #map {
-            flex: 1;
-            border-radius: 12px;
-            overflow: hidden;
+            height: 350px;
+            width: 100%;
+        }
+
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .info-row {
@@ -324,17 +357,24 @@
             border-left: 4px solid #3182ce;
         }
 
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
+        }
+
         .pickup-list {
-            max-height: 200px;
+            max-height: 120px;
             overflow-y: auto;
+            margin-bottom: 12px;
         }
 
         .pickup-item {
             background: #f7fafc;
-            padding: 12px;
+            padding: 8px 12px;
             border-radius: 6px;
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 6px;
+            font-size: 12px;
             color: #4a5568;
             border: 1px solid #e2e8f0;
         }
@@ -342,22 +382,22 @@
         .legend {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-top: 16px;
+            gap: 8px;
+            margin-top: 12px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            font-size: 13px;
+            font-size: 12px;
             color: #4a5568;
         }
 
         .legend-marker {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            margin-right: 10px;
+            margin-right: 8px;
         }
 
         .marker-user {
@@ -376,6 +416,16 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .required {
+            color: #e53e3e;
         }
     </style>
 </head>
@@ -516,53 +566,128 @@
                 </div>
 
                 <div class="page" id="map">
-                    <div class="map-container">
-                        <div class="map-sidebar">
-                            <h3 style="margin-bottom: 16px;">Route Controls</h3>
-                            
-                            <div class="alert alert-info" id="pickupAlert">
-                                Click "Add Pickup Location" then click on the map to place a pickup point.
+                    <div class="map-page-layout">
+                        <div class="form-section">
+                            <div class="card">
+                                <h3>Donor / Pickup Information</h3>
+                                <div class="alert alert-info">
+                                    Fill in your details to request a pickup
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Full Name <span class="required">*</span></label>
+                                        <input type="text" placeholder="Enter your name" id="donorName" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Phone Number <span class="required">*</span></label>
+                                        <input type="tel" placeholder="+91 XXXXX XXXXX" id="donorPhone" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Email Address <span class="required">*</span></label>
+                                    <input type="email" placeholder="your.email@example.com" id="donorEmail" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Organization / Restaurant Name</label>
+                                    <input type="text" placeholder="Optional" id="orgName" />
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Donation Type <span class="required">*</span></label>
+                                        <select id="donationType">
+                                            <option value="">Select type</option>
+                                            <option value="food">Food</option>
+                                            <option value="medicine">Medicine</option>
+                                            <option value="both">Both</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Estimated Quantity (kg) <span class="required">*</span></label>
+                                        <input type="number" placeholder="0" id="quantity" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Address <span class="required">*</span></label>
+                                    <textarea placeholder="Enter full pickup address" id="address"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Additional Notes</label>
+                                    <textarea placeholder="Any special instructions or details about the items" id="notes"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Preferred Pickup Time</label>
+                                    <input type="datetime-local" id="pickupTime" />
+                                </div>
+
+                                <button class="btn btn-primary" style="width: 100%;" id="submitDonorForm">
+                                    Submit Pickup Request
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="map-section">
+                            <div class="map-container">
+                                <div class="map-header">
+                                    <h3>Interactive Route Map</h3>
+                                </div>
+                                <div id="map"></div>
                             </div>
 
-                            <button class="btn btn-primary" id="addPickupBtn" style="width: 100%; margin-bottom: 12px;">📍 Add Pickup Location</button>
-                            
-                            <div style="margin: 20px 0;">
-                                <div class="info-row">
-                                    <span class="info-label">Your Location</span>
-                                    <span class="info-value" id="userLocation">Detecting...</span>
+                            <div class="card">
+                                <h3>Map Controls</h3>
+                                
+                                <div class="alert alert-info" id="pickupAlert" style="font-size: 12px; padding: 10px 12px;">
+                                    Click button then click on map to add pickup
                                 </div>
-                                <div class="info-row">
-                                    <span class="info-label">Active NGOs</span>
-                                    <span class="info-value" id="ngoCount">0</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Pickup Points</span>
-                                    <span class="info-value" id="pickupCount">0</span>
-                                </div>
-                            </div>
 
-                            <h4 style="margin: 16px 0 12px 0; font-size: 14px;">Pickup Points</h4>
-                            <div class="pickup-list" id="pickupList"></div>
+                                <button class="btn btn-primary" id="addPickupBtn" style="width: 100%; margin-bottom: 12px; font-size: 13px; padding: 8px 16px;">
+                                    📍 Add Pickup Location
+                                </button>
 
-                            <button class="btn btn-secondary" id="optimizeBtn" disabled style="width: 100%; margin-top: 16px;">🚀 Optimize Route</button>
+                                <div style="margin: 12px 0;">
+                                    <div class="info-row" style="padding: 8px 0; font-size: 13px;">
+                                        <span class="info-label">Your Location</span>
+                                        <span class="info-value" id="userLocation" style="font-size: 12px;">Detecting...</span>
+                                    </div>
+                                    <div class="info-row" style="padding: 8px 0; font-size: 13px;">
+                                        <span class="info-label">Active NGOs</span>
+                                        <span class="info-value" id="ngoCount">0</span>
+                                    </div>
+                                    <div class="info-row" style="padding: 8px 0; font-size: 13px;">
+                                        <span class="info-label">Pickup Points</span>
+                                        <span class="info-value" id="pickupCount">0</span>
+                                    </div>
+                                </div>
 
-                            <div class="legend">
-                                <h4 style="margin-bottom: 8px; font-size: 14px;">Map Legend</h4>
-                                <div class="legend-item">
-                                    <div class="legend-marker marker-user"></div>
-                                    <span>Your Location</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-marker marker-ngo"></div>
-                                    <span>NGO Centers</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-marker marker-pickup"></div>
-                                    <span>Pickup Points</span>
+                                <div class="pickup-list" id="pickupList"></div>
+
+                                <button class="btn btn-secondary" id="optimizeBtn" disabled style="width: 100%; font-size: 13px; padding: 8px 16px;">
+                                    🚀 Optimize Route
+                                </button>
+
+                                <div class="legend">
+                                    <div class="legend-item">
+                                        <div class="legend-marker marker-user"></div>
+                                        <span>Your Location</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-marker marker-ngo"></div>
+                                        <span>NGO Centers</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-marker marker-pickup"></div>
+                                        <span>Pickup Points</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div id="map"></div>
                     </div>
                 </div>
 
@@ -574,6 +699,7 @@
                                 <tr>
                                     <th>Request ID</th>
                                     <th>Date</th>
+                                    <th>Donor Name</th>
                                     <th>Location</th>
                                     <th>Type</th>
                                     <th>Quantity</th>
@@ -585,6 +711,7 @@
                                 <tr>
                                     <td>#1247</td>
                                     <td>Feb 7, 2026</td>
+                                    <td>Raj Hotel</td>
                                     <td>Connaught Place</td>
                                     <td>Food</td>
                                     <td>50 kg</td>
@@ -594,6 +721,7 @@
                                 <tr>
                                     <td>#1248</td>
                                     <td>Feb 7, 2026</td>
+                                    <td>MediCare Pharmacy</td>
                                     <td>Karol Bagh</td>
                                     <td>Medicine</td>
                                     <td>30 kg</td>
@@ -603,6 +731,7 @@
                                 <tr>
                                     <td>#1249</td>
                                     <td>Feb 8, 2026</td>
+                                    <td>Paradise Restaurant</td>
                                     <td>Saket</td>
                                     <td>Food</td>
                                     <td>75 kg</td>
@@ -612,6 +741,7 @@
                                 <tr>
                                     <td>#1250</td>
                                     <td>Feb 8, 2026</td>
+                                    <td>Spice Kitchen</td>
                                     <td>Dwarka</td>
                                     <td>Food</td>
                                     <td>40 kg</td>
@@ -858,7 +988,7 @@
                     isAddingPickup = false;
                     document.getElementById('addPickupBtn').textContent = '📍 Add Pickup Location';
                     document.getElementById('addPickupBtn').style.background = '#3182ce';
-                    document.getElementById('pickupAlert').textContent = 'Click "Add Pickup Location" then click on the map to place a pickup point.';
+                    document.getElementById('pickupAlert').textContent = 'Click button then click on map to add pickup';
                     map.getContainer().style.cursor = '';
                 }
             });
@@ -913,13 +1043,39 @@
             } else {
                 btn.textContent = '📍 Add Pickup Location';
                 btn.style.background = '#3182ce';
-                alert.textContent = 'Click "Add Pickup Location" then click on the map to place a pickup point.';
+                alert.textContent = 'Click button then click on map to add pickup';
                 map.getContainer().style.cursor = '';
             }
         });
 
         document.getElementById('optimizeBtn').addEventListener('click', () => {
             alert('Route optimization would connect to backend API here.\n\nPickup points: ' + pickupMarkers.length + '\nNGO centers: ' + ngoMarkers.length);
+        });
+
+        document.getElementById('submitDonorForm').addEventListener('click', () => {
+            const name = document.getElementById('donorName').value;
+            const phone = document.getElementById('donorPhone').value;
+            const email = document.getElementById('donorEmail').value;
+            const type = document.getElementById('donationType').value;
+            const quantity = document.getElementById('quantity').value;
+            const address = document.getElementById('address').value;
+
+            if (!name || !phone || !email || !type || !quantity || !address) {
+                alert('Please fill all required fields marked with *');
+                return;
+            }
+
+            alert('Pickup request submitted successfully!\n\nName: ' + name + '\nType: ' + type + '\nQuantity: ' + quantity + ' kg\n\nYou will receive a confirmation shortly.');
+            
+            document.getElementById('donorName').value = '';
+            document.getElementById('donorPhone').value = '';
+            document.getElementById('donorEmail').value = '';
+            document.getElementById('orgName').value = '';
+            document.getElementById('donationType').value = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('notes').value = '';
+            document.getElementById('pickupTime').value = '';
         });
     </script>
 </body>
