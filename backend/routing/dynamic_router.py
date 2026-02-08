@@ -1,13 +1,16 @@
 from routing.osrm_client import get_route
-from storage.csv_file import store
+from routing.expiry_logic import sort_by_priority
 
-def compute_route(vehicle):
-    route_points = []
-    current = vehicle
 
-    for pickup in store.get_all():
-        segment = get_route(current, (pickup.lat, pickup.lng))
-        route_points.extend(segment)
-        current = (pickup.lat, pickup.lng)
+def optimize_route(pickups, ngos, start_location):
+    ordered = sort_by_priority(pickups)
 
-    return route_points
+    points = [start_location]
+
+    for p in ordered:
+        points.append((p.latitude, p.longitude))
+
+    points.append((ngos[0].latitude, ngos[0].longitude))
+
+    route = get_route(points)
+    return route, points

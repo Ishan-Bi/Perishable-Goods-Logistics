@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food & Medicine Rescue - Dashboard</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    
     <style>
         * {
             margin: 0;
@@ -15,7 +17,6 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: #f5f7fa;
-            overflow: hidden;
         }
 
         .main-container {
@@ -125,6 +126,11 @@
             padding: 32px;
         }
 
+        .page-content.map-page {
+            padding: 0;
+            overflow-y: auto;
+        }
+
         .page {
             display: none;
         }
@@ -221,13 +227,18 @@
             color: #7c2d12;
         }
 
+        .badge.danger {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
         .badge.info {
             background: #bee3f8;
             color: #2c5282;
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
             border-radius: 8px;
             font-size: 14px;
@@ -246,12 +257,126 @@
         }
 
         .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-success {
             background: #48bb78;
             color: white;
         }
 
-        .btn-secondary:hover {
+        .btn-success:hover {
             background: #38a169;
+        }
+
+        .map-container {
+            padding: 24px;
+        }
+
+        #mapView {
+            height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1;
+        }
+
+        .map-controls {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .map-stat-item {
+            padding: 16px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .map-stat-item h5 {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+
+        .map-stat-item .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .pickup-list {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f7fafc;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .pickup-item {
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            border-left: 3px solid #e53e3e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pickup-item-info {
+            flex: 1;
+        }
+
+        .pickup-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border-left: 4px solid #3182ce;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
         }
 
         .form-group {
@@ -270,9 +395,9 @@
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 10px 14px;
+            padding: 12px;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 14px;
             font-family: inherit;
         }
@@ -282,158 +407,111 @@
             min-height: 100px;
         }
 
-        .map-page-layout {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 24px;
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
         }
 
-        .map-section {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .map-container {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .map-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .map-header h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #2d3748;
-            margin: 0;
-        }
-
-        #map {
-            height: 350px;
-            width: 100%;
-        }
-
-        .form-section {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 14px;
-        }
-
-        .info-label {
-            color: #718096;
-            font-weight: 500;
-        }
-
-        .info-value {
-            color: #2d3748;
-            font-weight: 600;
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 14px;
-        }
-
-        .alert-info {
-            background: #bee3f8;
-            color: #2c5282;
-            border-left: 4px solid #3182ce;
-        }
-
-        .alert-success {
-            background: #c6f6d5;
-            color: #22543d;
-            border-left: 4px solid #48bb78;
-        }
-
-        .pickup-list {
-            max-height: 120px;
-            overflow-y: auto;
-            margin-bottom: 12px;
-        }
-
-        .pickup-item {
-            background: #f7fafc;
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin-bottom: 6px;
-            font-size: 12px;
-            color: #4a5568;
-            border: 1px solid #e2e8f0;
-        }
-
-        .legend {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            font-size: 12px;
-            color: #4a5568;
-        }
-
-        .legend-marker {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .marker-user {
-            background: #3182ce;
-        }
-
-        .marker-ngo {
-            background: #48bb78;
-        }
-
-        .marker-pickup {
-            background: #e53e3e;
-        }
-
-        .grid-2 {
+        .two-column {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
 
-        .form-row {
+        .three-column {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 16px;
         }
 
-        .required {
-            color: #e53e3e;
+        .chart-placeholder {
+            height: 300px;
+            background: #f7fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            display: none;
+            min-width: 300px;
+        }
+
+        .toast.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success {
+            border-left: 4px solid #48bb78;
+        }
+
+        .toast.error {
+            border-left: 4px solid #e53e3e;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #ed8936;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .leaflet-routing-container {
+            display: none;
+        }
+
+        .coord-input-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .coord-input-section h4 {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .input-small {
+            padding: 8px 12px;
+            font-size: 13px;
         }
     </style>
 </head>
 <body>
+    <div id="toast" class="toast">
+        <div id="toastMessage"></div>
+    </div>
+
     <div class="main-container">
         <div class="nav-sidebar">
             <div class="brand">
-                <h2>🚑 Food Rescue</h2>
+                <h2>🍎 Food Rescue</h2>
                 <p>Logistics Optimizer</p>
             </div>
             <div class="nav-menu">
@@ -450,8 +528,8 @@
                     <span>Pickup Requests</span>
                 </div>
                 <div class="nav-item" data-page="ngos">
-                    <span class="nav-icon">🏢</span>
-                    <span>NGO Centers</span>
+                    <span class="nav-icon">🏥</span>
+                    <span>NGO Partners</span>
                 </div>
                 <div class="nav-item" data-page="analytics">
                     <span class="nav-icon">📈</span>
@@ -469,394 +547,372 @@
                 <h1 id="pageTitle">Dashboard Overview</h1>
                 <div class="user-info">
                     <div class="user-avatar">AD</div>
-                    <span style="font-weight: 600; font-size: 14px;">Admin User</span>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px;">Admin User</div>
+                        <div style="font-size: 12px; color: #718096;">Coordinator</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="page-content">
-                <div class="page active" id="dashboard">
+            <div class="page-content" id="pageContentArea">
+                <!-- Dashboard Page -->
+                <div id="dashboard" class="page active">
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <h4>Active Pickups</h4>
-                            <div class="value">24</div>
-                            <div class="change">↑ 12% from last week</div>
+                            <h4>Total Pickups</h4>
+                            <div class="value">247</div>
+                            <div class="change">+12% from last month</div>
                         </div>
                         <div class="stat-card">
-                            <h4>NGO Partners</h4>
-                            <div class="value">15</div>
-                            <div class="change">↑ 3 new this month</div>
+                            <h4>Food Saved (kg)</h4>
+                            <div class="value">3,842</div>
+                            <div class="change">+18% from last month</div>
                         </div>
                         <div class="stat-card">
-                            <h4>Food Rescued (kg)</h4>
-                            <div class="value">1,247</div>
-                            <div class="change">↑ 23% from last week</div>
+                            <h4>Active NGOs</h4>
+                            <div class="value">18</div>
+                            <div class="change">+2 new partners</div>
                         </div>
                         <div class="stat-card">
-                            <h4>CO2 Saved (kg)</h4>
-                            <div class="value">843</div>
-                            <div class="change">↑ 18% from last week</div>
+                            <h4>Pending Requests</h4>
+                            <div class="value">12</div>
+                            <div class="change" style="color: #e53e3e;">Needs attention</div>
                         </div>
                     </div>
 
-                    <div class="grid-2">
-                        <div class="card">
-                            <h3>Recent Pickup Requests</h3>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Location</th>
-                                        <th>Items</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>#1247</td>
-                                        <td>Connaught Place</td>
-                                        <td>50 kg food</td>
-                                        <td><span class="badge success">Completed</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>#1248</td>
-                                        <td>Karol Bagh</td>
-                                        <td>30 kg medicines</td>
-                                        <td><span class="badge info">In Transit</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>#1249</td>
-                                        <td>Saket</td>
-                                        <td>75 kg food</td>
-                                        <td><span class="badge warning">Pending</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="card">
-                            <h3>NGO Performance</h3>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>NGO Name</th>
-                                        <th>Pickups</th>
-                                        <th>Rating</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>City Food Bank</td>
-                                        <td>127</td>
-                                        <td>⭐ 4.8</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Hope Foundation</td>
-                                        <td>95</td>
-                                        <td>⭐ 4.6</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Care & Share</td>
-                                        <td>83</td>
-                                        <td>⭐ 4.7</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="page" id="map">
-                    <div class="map-page-layout">
-                        <div class="form-section">
-                            <div class="card">
-                                <h3>Donor / Pickup Information</h3>
-                                <div class="alert alert-info">
-                                    Fill in your details to request a pickup
-                                </div>
-
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Full Name <span class="required">*</span></label>
-                                        <input type="text" placeholder="Enter your name" id="donorName" />
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Phone Number <span class="required">*</span></label>
-                                        <input type="tel" placeholder="+91 XXXXX XXXXX" id="donorPhone" />
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Email Address <span class="required">*</span></label>
-                                    <input type="email" placeholder="your.email@example.com" id="donorEmail" />
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Organization / Restaurant Name</label>
-                                    <input type="text" placeholder="Optional" id="orgName" />
-                                </div>
-
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Donation Type <span class="required">*</span></label>
-                                        <select id="donationType">
-                                            <option value="">Select type</option>
-                                            <option value="food">Food</option>
-                                            <option value="medicine">Medicine</option>
-                                            <option value="both">Both</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Estimated Quantity (kg) <span class="required">*</span></label>
-                                        <input type="number" placeholder="0" id="quantity" />
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Address <span class="required">*</span></label>
-                                    <textarea placeholder="Enter full pickup address" id="address"></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Additional Notes</label>
-                                    <textarea placeholder="Any special instructions or details about the items" id="notes"></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Preferred Pickup Time</label>
-                                    <input type="datetime-local" id="pickupTime" />
-                                </div>
-
-                                <button class="btn btn-primary" style="width: 100%;" id="submitDonorForm">
-                                    Submit Pickup Request
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="map-section">
-                            <div class="map-container">
-                                <div class="map-header">
-                                    <h3>Interactive Route Map</h3>
-                                </div>
-                                <div id="map"></div>
-                            </div>
-
-                            <div class="card">
-                                <h3>Map Controls</h3>
-                                
-                                <div class="alert alert-info" id="pickupAlert" style="font-size: 12px; padding: 10px 12px;">
-                                    Click button then click on map to add pickup
-                                </div>
-
-                                <button class="btn btn-primary" id="addPickupBtn" style="width: 100%; margin-bottom: 12px; font-size: 13px; padding: 8px 16px;">
-                                    📍 Add Pickup Location
-                                </button>
-
-                                <div style="margin: 12px 0;">
-                                    <div class="info-row" style="padding: 8px 0; font-size: 13px;">
-                                        <span class="info-label">Your Location</span>
-                                        <span class="info-value" id="userLocation" style="font-size: 12px;">Detecting...</span>
-                                    </div>
-                                    <div class="info-row" style="padding: 8px 0; font-size: 13px;">
-                                        <span class="info-label">Active NGOs</span>
-                                        <span class="info-value" id="ngoCount">0</span>
-                                    </div>
-                                    <div class="info-row" style="padding: 8px 0; font-size: 13px;">
-                                        <span class="info-label">Pickup Points</span>
-                                        <span class="info-value" id="pickupCount">0</span>
-                                    </div>
-                                </div>
-
-                                <div class="pickup-list" id="pickupList"></div>
-
-                                <button class="btn btn-secondary" id="optimizeBtn" disabled style="width: 100%; font-size: 13px; padding: 8px 16px;">
-                                    🚀 Optimize Route
-                                </button>
-
-                                <div class="legend">
-                                    <div class="legend-item">
-                                        <div class="legend-marker marker-user"></div>
-                                        <span>Your Location</span>
-                                    </div>
-                                    <div class="legend-item">
-                                        <div class="legend-marker marker-ngo"></div>
-                                        <span>NGO Centers</span>
-                                    </div>
-                                    <div class="legend-item">
-                                        <div class="legend-marker marker-pickup"></div>
-                                        <span>Pickup Points</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="page" id="pickups">
                     <div class="card">
-                        <h3>All Pickup Requests</h3>
+                        <h3>Recent Activity</h3>
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Request ID</th>
-                                    <th>Date</th>
-                                    <th>Donor Name</th>
-                                    <th>Location</th>
+                                    <th>ID</th>
+                                    <th>Donor</th>
                                     <th>Type</th>
                                     <th>Quantity</th>
-                                    <th>Assigned NGO</th>
                                     <th>Status</th>
+                                    <th>Time</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td>#1247</td>
-                                    <td>Feb 7, 2026</td>
-                                    <td>Raj Hotel</td>
-                                    <td>Connaught Place</td>
-                                    <td>Food</td>
-                                    <td>50 kg</td>
-                                    <td>City Food Bank</td>
+                                    <td>Restaurant ABC</td>
+                                    <td>Cooked Food</td>
+                                    <td>45 kg</td>
                                     <td><span class="badge success">Completed</span></td>
+                                    <td>2 hours ago</td>
                                 </tr>
                                 <tr>
-                                    <td>#1248</td>
-                                    <td>Feb 7, 2026</td>
-                                    <td>MediCare Pharmacy</td>
-                                    <td>Karol Bagh</td>
-                                    <td>Medicine</td>
+                                    <td>#1246</td>
+                                    <td>Hotel XYZ</td>
+                                    <td>Raw Vegetables</td>
                                     <td>30 kg</td>
-                                    <td>Hope Foundation</td>
-                                    <td><span class="badge info">In Transit</span></td>
+                                    <td><span class="badge warning">In Transit</span></td>
+                                    <td>4 hours ago</td>
                                 </tr>
                                 <tr>
-                                    <td>#1249</td>
-                                    <td>Feb 8, 2026</td>
-                                    <td>Paradise Restaurant</td>
-                                    <td>Saket</td>
-                                    <td>Food</td>
-                                    <td>75 kg</td>
-                                    <td>Care & Share</td>
-                                    <td><span class="badge warning">Pending</span></td>
-                                </tr>
-                                <tr>
-                                    <td>#1250</td>
-                                    <td>Feb 8, 2026</td>
-                                    <td>Spice Kitchen</td>
-                                    <td>Dwarka</td>
-                                    <td>Food</td>
-                                    <td>40 kg</td>
-                                    <td>Helping Hands</td>
-                                    <td><span class="badge warning">Pending</span></td>
+                                    <td>#1245</td>
+                                    <td>Supermarket 123</td>
+                                    <td>Packaged Food</td>
+                                    <td>60 kg</td>
+                                    <td><span class="badge info">Scheduled</span></td>
+                                    <td>6 hours ago</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="page" id="ngos">
+                <!-- Map Page with Coordinate Inputs -->
+                <div id="map" class="page">
+                    <div class="map-container">
+                        <div id="mapView"></div>
+                    </div>
+
+                    <div class="map-controls">
+                        <div class="map-stats">
+                            <div class="map-stat-item">
+                                <h5>Your Location</h5>
+                                <div class="value" id="userLocation" style="font-size: 14px;">Getting...</div>
+                            </div>
+                            <div class="map-stat-item">
+                                <h5>NGO Centers</h5>
+                                <div class="value" id="ngoCount">0</div>
+                            </div>
+                            <div class="map-stat-item">
+                                <h5>Pickup Points</h5>
+                                <div class="value" id="pickupCount">0</div>
+                            </div>
+                        </div>
+
+                        <!-- Coordinate Input Section -->
+                        <div class="coord-input-section">
+                            <h4>📍 Add Pickup Point by Coordinates</h4>
+                            <div class="three-column">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Latitude</label>
+                                    <input type="number" id="inputLat" class="input-small" placeholder="28.6139" step="0.0001">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Longitude</label>
+                                    <input type="number" id="inputLng" class="input-small" placeholder="77.2090" step="0.0001">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-success" id="addByCoordBtn" style="width: 100%;">
+                                        ➕ Add Location
+                                    </button>
+                                </div>
+                            </div>
+                            <small style="color: #718096; font-size: 12px; margin-top: 8px; display: block;">
+                                Enter latitude and longitude, then click "Add Location" to add a pickup point
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info" id="pickupAlert">
+                            Add pickup locations by clicking on map or entering coordinates above
+                        </div>
+
+                        <div class="control-buttons">
+                            <button class="btn btn-primary" id="addPickupBtn">📍 Add by Map Click</button>
+                            <button class="btn btn-secondary" id="optimizeBtn" disabled>🚀 Optimize Route</button>
+                            <button class="btn btn-secondary" id="clearPickupsBtn">🗑️ Clear All Pickups</button>
+                        </div>
+
+                        <div class="pickup-list" id="pickupList" style="display: none;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px; color: #2d3748;">Added Pickup Points:</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pickups Page - FIXED FORM FIELD NAMES -->
+                <div id="pickups" class="page">
                     <div class="card">
-                        <h3>Registered NGO Partners</h3>
+                        <h3>📦 Submit New Pickup Request</h3>
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label>Donor Name *</label>
+                                <input type="text" id="donorName" placeholder="Enter your name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number *</label>
+                                <input type="tel" id="donorPhone" placeholder="+91 XXXXX XXXXX" required>
+                            </div>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="donorEmail" placeholder="your@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Organization Name</label>
+                                <input type="text" id="orgName" placeholder="Restaurant/Hotel name">
+                            </div>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label>Donation Type *</label>
+                                <select id="donationType" required>
+                                    <option value="">Select type</option>
+                                    <option value="Cooked Food">Cooked Food</option>
+                                    <option value="Raw Vegetables">Raw Vegetables</option>
+                                    <option value="Fruits">Fruits</option>
+                                    <option value="Packaged Food">Packaged Food</option>
+                                    <option value="Medicines">Medicines</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Estimated Quantity (kg) *</label>
+                                <input type="number" id="quantity" placeholder="e.g., 25" min="0.1" step="0.1" required>
+                            </div>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label>Latitude *</label>
+                                <input type="number" id="pickupLat" placeholder="28.6139" step="0.0001" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude *</label>
+                                <input type="number" id="pickupLng" placeholder="77.2090" step="0.0001" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Pickup Address</label>
+                            <textarea id="address" placeholder="Full address with landmark"></textarea>
+                        </div>
+
+                        <div class="two-column">
+                            <div class="form-group">
+                                <label>Preferred Pickup Time</label>
+                                <input type="datetime-local" id="pickupTime">
+                            </div>
+                            <div class="form-group">
+                                <label>Special Instructions</label>
+                                <textarea id="notes" placeholder="Any special handling requirements" style="min-height: 60px;"></textarea>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" id="submitDonorForm">Submit Pickup Request</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Recent Pickup Requests</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Donor</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pickupsTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- NGOs Page -->
+                <div id="ngos" class="page">
+                    <div class="card">
+                        <h3>🏥 Partner NGO Network</h3>
                         <table class="table">
                             <thead>
                                 <tr>
                                     <th>NGO Name</th>
                                     <th>Location</th>
-                                    <th>Contact</th>
-                                    <th>Total Pickups</th>
-                                    <th>Rating</th>
+                                    <th>Capacity</th>
+                                    <th>Last Pickup</th>
                                     <th>Status</th>
+                                    <th>Contact</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td>City Food Bank NGO</td>
                                     <td>Central Delhi</td>
-                                    <td>+91-98765-43210</td>
-                                    <td>127</td>
-                                    <td>⭐ 4.8</td>
+                                    <td>500 kg/day</td>
+                                    <td>2 hours ago</td>
                                     <td><span class="badge success">Active</span></td>
+                                    <td>+91 98XXX XXXXX</td>
                                 </tr>
                                 <tr>
                                     <td>Hope Foundation</td>
-                                    <td>South Delhi</td>
-                                    <td>+91-98765-43211</td>
-                                    <td>95</td>
-                                    <td>⭐ 4.6</td>
+                                    <td>North Delhi</td>
+                                    <td>300 kg/day</td>
+                                    <td>5 hours ago</td>
                                     <td><span class="badge success">Active</span></td>
+                                    <td>+91 97XXX XXXXX</td>
                                 </tr>
                                 <tr>
                                     <td>Care & Share NGO</td>
-                                    <td>West Delhi</td>
-                                    <td>+91-98765-43212</td>
-                                    <td>83</td>
-                                    <td>⭐ 4.7</td>
-                                    <td><span class="badge success">Active</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Helping Hands</td>
-                                    <td>East Delhi</td>
-                                    <td>+91-98765-43213</td>
-                                    <td>72</td>
-                                    <td>⭐ 4.5</td>
-                                    <td><span class="badge success">Active</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Community Kitchen</td>
-                                    <td>North Delhi</td>
-                                    <td>+91-98765-43214</td>
-                                    <td>64</td>
-                                    <td>⭐ 4.4</td>
-                                    <td><span class="badge success">Active</span></td>
+                                    <td>South Delhi</td>
+                                    <td>400 kg/day</td>
+                                    <td>1 day ago</td>
+                                    <td><span class="badge warning">Limited</span></td>
+                                    <td>+91 96XXX XXXXX</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="page" id="analytics">
+                <!-- Analytics Page -->
+                <div id="analytics" class="page">
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <h4>Total Food Rescued</h4>
-                            <div class="value">12.4 T</div>
-                            <div class="change">This year</div>
+                            <h4>This Month</h4>
+                            <div class="value">89</div>
+                            <div class="change">Pickups Completed</div>
                         </div>
                         <div class="stat-card">
-                            <h4>Meals Provided</h4>
-                            <div class="value">24,800</div>
-                            <div class="change">Approx. meals</div>
+                            <h4>Food Saved</h4>
+                            <div class="value">1,247 kg</div>
+                            <div class="change">This Month</div>
                         </div>
                         <div class="stat-card">
-                            <h4>Total Routes</h4>
-                            <div class="value">342</div>
-                            <div class="change">Optimized routes</div>
+                            <h4>Avg Response Time</h4>
+                            <div class="value">42 min</div>
+                            <div class="change" style="color: #48bb78;">-8% faster</div>
                         </div>
                         <div class="stat-card">
-                            <h4>Avg. Response Time</h4>
-                            <div class="value">28 min</div>
-                            <div class="change">↓ 15% improvement</div>
+                            <h4>CO₂ Saved</h4>
+                            <div class="value">3.2 tons</div>
+                            <div class="change">Environmental Impact</div>
                         </div>
                     </div>
 
                     <div class="card">
-                        <h3>Monthly Performance Trends</h3>
-                        <div style="padding: 40px; text-align: center; color: #718096;">
-                            <p>📊 Chart visualization would be integrated here</p>
-                            <p style="margin-top: 8px; font-size: 13px;">Food rescued vs. CO2 saved over time</p>
+                        <h3>Monthly Trends</h3>
+                        <div class="chart-placeholder">
+                            📊 Chart visualization would go here<br>
+                            (Connect Chart.js or similar library)
                         </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Top Donors</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Donor Name</th>
+                                    <th>Total Donations</th>
+                                    <th>Quantity (kg)</th>
+                                    <th>Impact Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>🥇</td>
+                                    <td>Grand Hotel</td>
+                                    <td>45</td>
+                                    <td>892 kg</td>
+                                    <td><span class="badge success">★★★★★</span></td>
+                                </tr>
+                                <tr>
+                                    <td>🥈</td>
+                                    <td>City Restaurant Chain</td>
+                                    <td>38</td>
+                                    <td>745 kg</td>
+                                    <td><span class="badge success">★★★★☆</span></td>
+                                </tr>
+                                <tr>
+                                    <td>🥉</td>
+                                    <td>Fresh Mart Supermarket</td>
+                                    <td>32</td>
+                                    <td>680 kg</td>
+                                    <td><span class="badge success">★★★★☆</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div class="page" id="settings">
+                <!-- Settings Page -->
+                <div id="settings" class="page">
                     <div class="card">
-                        <h3>Application Settings</h3>
-                        
+                        <h3>⚙️ System Settings</h3>
                         <div class="form-group">
-                            <label>Organization Name</label>
-                            <input type="text" value="Food & Medicine Rescue Delhi" />
+                            <label>Backend API URL</label>
+                            <input type="text" id="apiUrl" value="http://127.0.0.1:8000" placeholder="http://127.0.0.1:8000">
+                            <small style="color: #718096; font-size: 12px; display: block; margin-top: 4px;">
+                                Change this to your FastAPI backend URL
+                            </small>
                         </div>
 
                         <div class="form-group">
-                            <label>Default Location</label>
+                            <label>Default City</label>
                             <select>
                                 <option>Delhi NCR</option>
                                 <option>Mumbai</option>
@@ -890,13 +946,18 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script>
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+
         let map;
         let userMarker;
         let pickupMarkers = [];
         let ngoMarkers = [];
         let isAddingPickup = false;
         let mapInitialized = false;
+        let currentRoutes = [];
+        let userLocation = null;
 
         const ngoLocations = [
             { name: 'City Food Bank NGO', lat: 28.6139, lng: 77.2090 },
@@ -926,17 +987,29 @@
             popupAnchor: [0, -42]
         });
 
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
         function initializeMap() {
             if (mapInitialized) return;
             
-            map = L.map('map').setView([28.6139, 77.2090], 12);
+            map = L.map('mapView').setView([28.6139, 77.2090], 12);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors',
                 maxZoom: 19
             }).addTo(map);
 
-            ngoLocations.forEach((ngo, index) => {
+            ngoLocations.forEach((ngo) => {
                 const marker = L.marker([ngo.lat, ngo.lng], { icon: ngoIcon })
                     .addTo(map)
                     .bindPopup(`<b>${ngo.name}</b><br>NGO Distribution Center`);
@@ -951,6 +1024,8 @@
                         const lat = position.coords.latitude;
                         const lng = position.coords.longitude;
                         
+                        userLocation = { lat, lng };
+                        
                         userMarker = L.marker([lat, lng], { icon: userIcon })
                             .addTo(map)
                             .bindPopup('<b>You are here</b>');
@@ -960,42 +1035,142 @@
                         document.getElementById('userLocation').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
                     },
                     (error) => {
-                        document.getElementById('userLocation').textContent = 'Default view';
+                        document.getElementById('userLocation').textContent = 'Delhi (Default)';
+                        userLocation = { lat: 28.6139, lng: 77.2090 };
                     }
                 );
+            } else {
+                userLocation = { lat: 28.6139, lng: 77.2090 };
             }
 
             map.on('click', (e) => {
                 if (isAddingPickup) {
-                    const marker = L.marker([e.latlng.lat, e.latlng.lng], { icon: pickupIcon })
-                        .addTo(map)
-                        .bindPopup(`<b>Pickup Point #${pickupMarkers.length + 1}</b><br>Lat: ${e.latlng.lat.toFixed(4)}, Lng: ${e.latlng.lng.toFixed(4)}`);
-                    
-                    pickupMarkers.push(marker);
-                    
-                    const pickupList = document.getElementById('pickupList');
-                    const pickupItem = document.createElement('div');
-                    pickupItem.className = 'pickup-item';
-                    pickupItem.textContent = `Pickup #${pickupMarkers.length}: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
-                    pickupList.appendChild(pickupItem);
-                    
-                    document.getElementById('pickupCount').textContent = pickupMarkers.length;
-                    
-                    if (pickupMarkers.length > 0) {
-                        document.getElementById('optimizeBtn').disabled = false;
-                    }
-                    
-                    isAddingPickup = false;
-                    document.getElementById('addPickupBtn').textContent = '📍 Add Pickup Location';
-                    document.getElementById('addPickupBtn').style.background = '#3182ce';
-                    document.getElementById('pickupAlert').textContent = 'Click button then click on map to add pickup';
-                    map.getContainer().style.cursor = '';
+                    addPickupMarker(e.latlng.lat, e.latlng.lng);
                 }
             });
 
             mapInitialized = true;
         }
 
+        function addPickupMarker(lat, lng) {
+            const marker = L.marker([lat, lng], { icon: pickupIcon })
+                .addTo(map)
+                .bindPopup(`<b>Pickup Point #${pickupMarkers.length + 1}</b><br>Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`);
+            
+            pickupMarkers.push({ marker, lat, lng });
+            
+            updatePickupList();
+            
+            document.getElementById('pickupCount').textContent = pickupMarkers.length;
+            
+            if (pickupMarkers.length > 0) {
+                document.getElementById('optimizeBtn').disabled = false;
+            }
+            
+            isAddingPickup = false;
+            document.getElementById('addPickupBtn').textContent = '📍 Add by Map Click';
+            document.getElementById('addPickupBtn').classList.remove('btn-secondary');
+            document.getElementById('addPickupBtn').classList.add('btn-primary');
+            document.getElementById('pickupAlert').textContent = 'Add pickup locations by clicking on map or entering coordinates above';
+            map.getContainer().style.cursor = '';
+            
+            showToast(`Pickup point #${pickupMarkers.length} added!`, 'success');
+        }
+
+        function updatePickupList() {
+            const pickupList = document.getElementById('pickupList');
+            
+            if (pickupMarkers.length === 0) {
+                pickupList.style.display = 'none';
+                return;
+            }
+            
+            pickupList.style.display = 'block';
+            pickupList.innerHTML = '<h4 style="margin-bottom: 12px; font-size: 14px; color: #2d3748;">Added Pickup Points:</h4>';
+            
+            pickupMarkers.forEach((pickup, index) => {
+                const pickupItem = document.createElement('div');
+                pickupItem.className = 'pickup-item';
+                
+                const info = document.createElement('div');
+                info.className = 'pickup-item-info';
+                info.innerHTML = `<strong>Pickup #${index + 1}</strong><br>
+                                  Lat: ${pickup.lat.toFixed(4)}, Lng: ${pickup.lng.toFixed(4)}`;
+                
+                const actions = document.createElement('div');
+                actions.className = 'pickup-item-actions';
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn btn-secondary btn-small';
+                removeBtn.textContent = '🗑️ Remove';
+                removeBtn.onclick = () => removePickup(index);
+                
+                actions.appendChild(removeBtn);
+                
+                pickupItem.appendChild(info);
+                pickupItem.appendChild(actions);
+                pickupList.appendChild(pickupItem);
+            });
+        }
+
+        function removePickup(index) {
+            map.removeLayer(pickupMarkers[index].marker);
+            pickupMarkers.splice(index, 1);
+            updatePickupList();
+            document.getElementById('pickupCount').textContent = pickupMarkers.length;
+            
+            if (pickupMarkers.length === 0) {
+                document.getElementById('optimizeBtn').disabled = true;
+            }
+            
+            showToast('Pickup point removed', 'warning');
+        }
+
+        function clearAllPickups() {
+            pickupMarkers.forEach(pickup => map.removeLayer(pickup.marker));
+            pickupMarkers = [];
+            
+            currentRoutes.forEach(route => {
+                if (route && map.hasLayer(route)) {
+                    map.removeControl(route);
+                }
+            });
+            currentRoutes = [];
+            
+            updatePickupList();
+            document.getElementById('pickupCount').textContent = '0';
+            document.getElementById('optimizeBtn').disabled = true;
+            showToast('All pickup points cleared', 'info');
+        }
+
+        // Add by coordinates button
+        document.getElementById('addByCoordBtn').addEventListener('click', () => {
+            const lat = parseFloat(document.getElementById('inputLat').value);
+            const lng = parseFloat(document.getElementById('inputLng').value);
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                showToast('Please enter valid latitude and longitude', 'error');
+                return;
+            }
+            
+            if (lat < -90 || lat > 90) {
+                showToast('Latitude must be between -90 and 90', 'error');
+                return;
+            }
+            
+            if (lng < -180 || lng > 180) {
+                showToast('Longitude must be between -180 and 180', 'error');
+                return;
+            }
+            
+            addPickupMarker(lat, lng);
+            map.setView([lat, lng], 14);
+            
+            document.getElementById('inputLat').value = '';
+            document.getElementById('inputLng').value = '';
+        });
+
+        // Navigation
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', function() {
                 const pageName = this.getAttribute('data-page');
@@ -1016,16 +1191,20 @@
                 };
                 document.getElementById('pageTitle').textContent = titles[pageName];
 
-                if (pageName === 'map' && !mapInitialized) {
-                    setTimeout(() => {
-                        initializeMap();
-                    }, 100);
-                }
-
-                if (pageName === 'map' && mapInitialized) {
-                    setTimeout(() => {
-                        map.invalidateSize();
-                    }, 100);
+                const pageContentArea = document.getElementById('pageContentArea');
+                if (pageName === 'map') {
+                    pageContentArea.classList.add('map-page');
+                    if (!mapInitialized) {
+                        setTimeout(() => {
+                            initializeMap();
+                        }, 100);
+                    } else {
+                        setTimeout(() => {
+                            map.invalidateSize();
+                        }, 100);
+                    }
+                } else {
+                    pageContentArea.classList.remove('map-page');
                 }
             });
         });
@@ -1036,46 +1215,263 @@
             const alert = document.getElementById('pickupAlert');
             
             if (isAddingPickup) {
-                btn.textContent = '❌ Cancel Adding';
-                btn.style.background = '#e53e3e';
+                btn.textContent = '❌ Cancel';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
                 alert.textContent = 'Click anywhere on the map to add a pickup point!';
+                alert.className = 'alert alert-success';
                 map.getContainer().style.cursor = 'crosshair';
             } else {
-                btn.textContent = '📍 Add Pickup Location';
-                btn.style.background = '#3182ce';
-                alert.textContent = 'Click button then click on map to add pickup';
+                btn.textContent = '📍 Add by Map Click';
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-primary');
+                alert.textContent = 'Add pickup locations by clicking on map or entering coordinates above';
+                alert.className = 'alert alert-info';
                 map.getContainer().style.cursor = '';
             }
         });
 
+        document.getElementById('clearPickupsBtn').addEventListener('click', clearAllPickups);
+
         document.getElementById('optimizeBtn').addEventListener('click', () => {
-            alert('Route optimization would connect to backend API here.\n\nPickup points: ' + pickupMarkers.length + '\nNGO centers: ' + ngoMarkers.length);
-        });
-
-        document.getElementById('submitDonorForm').addEventListener('click', () => {
-            const name = document.getElementById('donorName').value;
-            const phone = document.getElementById('donorPhone').value;
-            const email = document.getElementById('donorEmail').value;
-            const type = document.getElementById('donationType').value;
-            const quantity = document.getElementById('quantity').value;
-            const address = document.getElementById('address').value;
-
-            if (!name || !phone || !email || !type || !quantity || !address) {
-                alert('Please fill all required fields marked with *');
+            if (pickupMarkers.length === 0) {
+                showToast('Please add pickup points first!', 'error');
                 return;
             }
 
-            alert('Pickup request submitted successfully!\n\nName: ' + name + '\nType: ' + type + '\nQuantity: ' + quantity + ' kg\n\nYou will receive a confirmation shortly.');
-            
-            document.getElementById('donorName').value = '';
-            document.getElementById('donorPhone').value = '';
-            document.getElementById('donorEmail').value = '';
-            document.getElementById('orgName').value = '';
-            document.getElementById('donationType').value = '';
-            document.getElementById('quantity').value = '';
-            document.getElementById('address').value = '';
-            document.getElementById('notes').value = '';
-            document.getElementById('pickupTime').value = '';
+            if (!userLocation) {
+                showToast('Waiting for user location...', 'warning');
+                return;
+            }
+
+            currentRoutes.forEach(route => {
+                if (route && map.hasLayer(route)) {
+                    map.removeControl(route);
+                }
+            });
+            currentRoutes = [];
+
+            let routeInfo = [];
+            let routesCompleted = 0;
+
+            pickupMarkers.forEach((pickup, index) => {
+                const pickupLat = pickup.lat;
+                const pickupLng = pickup.lng;
+
+                let nearestNGO = null;
+                let minDistance = Infinity;
+
+                ngoLocations.forEach((ngo) => {
+                    const distance = Math.sqrt(
+                        Math.pow(ngo.lat - pickupLat, 2) + 
+                        Math.pow(ngo.lng - pickupLng, 2)
+                    );
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestNGO = ngo;
+                    }
+                });
+
+                if (nearestNGO) {
+                    const routingControl = L.Routing.control({
+                        waypoints: [
+                            L.latLng(userLocation.lat, userLocation.lng),
+                            L.latLng(pickupLat, pickupLng),
+                            L.latLng(nearestNGO.lat, nearestNGO.lng)
+                        ],
+                        routeWhileDragging: false,
+                        addWaypoints: false,
+                        draggableWaypoints: false,
+                        fitSelectedRoutes: false,
+                        showAlternatives: false,
+                        lineOptions: {
+                            styles: [{ 
+                                color: index === 0 ? '#3182ce' : index === 1 ? '#48bb78' : index === 2 ? '#ed8936' : '#9f7aea', 
+                                opacity: 0.7, 
+                                weight: 4 
+                            }]
+                        },
+                        createMarker: function() { return null; }
+                    }).addTo(map);
+
+                    currentRoutes.push(routingControl);
+
+                    routingControl.on('routesfound', function(e) {
+                        const routes = e.routes;
+                        const summary = routes[0].summary;
+                        const distanceKm = (summary.totalDistance / 1000).toFixed(2);
+                        const timeMin = Math.round(summary.totalTime / 60);
+                        
+                        routeInfo.push(`Pickup #${index + 1}: ${distanceKm} km, ~${timeMin} min → ${nearestNGO.name}`);
+                        
+                        pickup.marker.bindPopup(
+                            `<b>Pickup Point #${index + 1}</b><br>
+                            Route: You → Pickup → ${nearestNGO.name}<br>
+                            Distance: ${distanceKm} km<br>
+                            Time: ~${timeMin} minutes`
+                        );
+
+                        routesCompleted++;
+                        if (routesCompleted === pickupMarkers.length) {
+                            setTimeout(() => {
+                                const routeSummary = `✅ Routes Optimized!\n\n${routeInfo.join('\n')}`;
+                                alert(routeSummary);
+                            }, 500);
+                        }
+                    });
+                }
+            });
+
+            showToast('Creating optimized routes...', 'success');
+        });
+
+        // FIXED: Form submission with correct field names matching backend
+        document.getElementById('submitDonorForm').addEventListener('click', async () => {
+            // Get values
+            const name = document.getElementById('donorName').value.trim();
+            const phone = document.getElementById('donorPhone').value.trim();
+            const email = document.getElementById('donorEmail').value.trim();
+            const organization = document.getElementById('orgName').value.trim();
+            const donation_type = document.getElementById('donationType').value;
+            const quantity = parseFloat(document.getElementById('quantity').value);
+            const latitude = parseFloat(document.getElementById('pickupLat').value);
+            const longitude = parseFloat(document.getElementById('pickupLng').value);
+            const address = document.getElementById('address').value.trim();
+            const pickup_time = document.getElementById('pickupTime').value || null;
+            const notes = document.getElementById('notes').value.trim();
+
+            // Validation - check required fields
+            if (!name) {
+                showToast('Please enter donor name', 'error');
+                return;
+            }
+            if (!phone) {
+                showToast('Please enter phone number', 'error');
+                return;
+            }
+            if (!donation_type) {
+                showToast('Please select donation type', 'error');
+                return;
+            }
+            if (isNaN(quantity) || quantity <= 0) {
+                showToast('Please enter valid quantity', 'error');
+                return;
+            }
+            if (isNaN(latitude)) {
+                showToast('Please enter valid latitude', 'error');
+                return;
+            }
+            if (isNaN(longitude)) {
+                showToast('Please enter valid longitude', 'error');
+                return;
+            }
+
+            // Create request body matching backend schema exactly
+            const formData = {
+                name: name,
+                phone: phone,
+                email: email || null,
+                organization: organization || null,
+                donation_type: donation_type,
+                quantity: quantity,
+                latitude: latitude,
+                longitude: longitude,
+                address: address || null,
+                pickup_time: pickup_time,
+                notes: notes || null
+            };
+
+            console.log('Sending data:', formData);
+
+            try {
+                const apiUrl = document.getElementById('apiUrl')?.value || API_BASE_URL;
+                const response = await fetch(`${apiUrl}/pickup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                console.log('Response:', result);
+
+                if (response.ok) {
+                    showToast('✅ Pickup request submitted successfully!', 'success');
+                    
+                    // Clear form
+                    document.getElementById('donorName').value = '';
+                    document.getElementById('donorPhone').value = '';
+                    document.getElementById('donorEmail').value = '';
+                    document.getElementById('orgName').value = '';
+                    document.getElementById('donationType').value = '';
+                    document.getElementById('quantity').value = '';
+                    document.getElementById('pickupLat').value = '';
+                    document.getElementById('pickupLng').value = '';
+                    document.getElementById('address').value = '';
+                    document.getElementById('notes').value = '';
+                    document.getElementById('pickupTime').value = '';
+
+                    loadPickups();
+                } else {
+                    let errorMsg = 'Failed to submit pickup request';
+                    
+                    if (result.detail) {
+                        if (Array.isArray(result.detail)) {
+                            errorMsg = result.detail.map(err => {
+                                const field = err.loc ? err.loc[err.loc.length - 1] : 'unknown';
+                                return `${field}: ${err.msg}`;
+                            }).join('\n');
+                        } else if (typeof result.detail === 'string') {
+                            errorMsg = result.detail;
+                        }
+                    }
+                    
+                    console.error('Validation errors:', result);
+                    alert('❌ Error:\n\n' + errorMsg);
+                    showToast('Failed to submit', 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting pickup:', error);
+                showToast('❌ Cannot connect to backend. Check API URL in Settings.', 'error');
+            }
+        });
+
+        async function loadPickups() {
+            try {
+                const apiUrl = document.getElementById('apiUrl')?.value || API_BASE_URL;
+                const response = await fetch(`${apiUrl}/pickups`);
+                
+                if (response.ok) {
+                    const pickups = await response.json();
+                    const tbody = document.getElementById('pickupsTableBody');
+                    
+                    if (pickups.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No pickups found</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = pickups.map(pickup => `
+                        <tr>
+                            <td>#${pickup.pickup_id || pickup.id || 'N/A'}</td>
+                            <td>${pickup.name || pickup.donor_name || 'N/A'}</td>
+                            <td>${pickup.donation_type || 'N/A'}</td>
+                            <td>${pickup.quantity || pickup.quantity_kg || 'N/A'} kg</td>
+                            <td>${pickup.address ? pickup.address.substring(0, 30) + '...' : `${pickup.latitude}, ${pickup.longitude}` || 'N/A'}</td>
+                            <td><span class="badge info">${pickup.status || 'Pending'}</span></td>
+                            <td><button class="btn btn-secondary" style="padding: 6px 12px;">View</button></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    console.log('Failed to load pickups');
+                }
+            } catch (error) {
+                console.error('Error loading pickups:', error);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            loadPickups();
         });
     </script>
 </body>
