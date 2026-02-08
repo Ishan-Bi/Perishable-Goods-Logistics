@@ -1,5 +1,5 @@
 from routing.osrm_client import get_route
-from storage.memory import store
+from storage.csv_file import store
 
 def compute_route(vehicle):
     route_points = []

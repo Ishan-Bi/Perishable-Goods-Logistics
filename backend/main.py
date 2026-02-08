@@ -1,64 +1,45 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# API routers
 from api.pickup_api import router as pickup_router
-from api.optimize_api import router as optimize_router
 
-# App instance
 app = FastAPI(
     title="Perishable Goods Logistics Optimizer",
-    description="Food & Medicine Rescue Routing Engine",
+    description="Backend for Food & Medicine Rescue Network",
     version="1.0.0"
 )
 
-# -----------------------------
-# Middleware
-# -----------------------------
+# 🔓 CORS (Frontend ke liye open)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # frontend ke liye
+    allow_origins=["*"],   # hackathon mode
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# -----------------------------
-# Routers
-# -----------------------------
-app.include_router(
-    pickup_router,
-    prefix="/api",
-    tags=["Pickups"]
-)
+# 🔗 Pickup APIs register
+app.include_router(pickup_router)
 
-app.include_router(
-    optimize_router,
-    prefix="/api",
-    tags=["Routing"]
-)
 
-# -----------------------------
-# Health Check
-# -----------------------------
+# 🟢 Root endpoint
 @app.get("/")
 def root():
     return {
-        "status": "Backend running",
-        "service": "Food & Medicine Rescue",
-        "version": "1.0.0"
+        "message": "Perishable Goods Logistics Optimizer Backend is running",
+        "available_endpoints": [
+            "/pickup  (POST)",
+            "/pickups (GET)",
+            "/docs"
+        ]
     }
 
-# -----------------------------
-# Startup Event
-# -----------------------------
-@app.on_event("startup")
-def startup_event():
-    print("Backend started successfully")
 
-# -----------------------------
-# Shutdown Event
-# -----------------------------
-@app.on_event("shutdown")
-def shutdown_event():
-    print("Backend shutting down")
+# 🟢 Health check
+@app.get("/health")
+def health():
+    return {
+        "status": "OK",
+        "storage": "CSV",
+        "data_file": "backend/data/pickups.csv"
+    }

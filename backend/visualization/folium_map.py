@@ -1,6 +1,6 @@
 import folium
 from storage.ngos import NGOS
-from storage.memory import store
+from storage.csv_file import store
 
 def generate_map(vehicle, route):
     m = folium.Map(location=vehicle, zoom_start=12)

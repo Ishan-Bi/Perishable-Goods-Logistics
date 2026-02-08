@@ -1,4 +1,4 @@
-from storage.memory import add_pickup
+from storage.csv_file import add_pickup
 from routing.dynamic_router import compute_route
 from visualization.folium_map import generate_map
 

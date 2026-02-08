@@ -1,0 +1,2 @@
+name,phone,email,organization,donation_type,quantity,address,notes,pickup_time,latitude,longitude
+Namaste,string,string,string,string,0,string,string,string,0.0,0.0
